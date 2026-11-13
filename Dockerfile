@@ -27,7 +27,8 @@ RUN go mod tidy && \
 FROM alpine:latest
 
 ARG TARGETARCH
-RUN apk --no-cache add ca-certificates tzdata
+# nftables/iproute2 用于网关模式（tproxy）在宿主 netns 内写规则
+RUN apk --no-cache add ca-certificates tzdata nftables iproute2
 
 WORKDIR /root/
 

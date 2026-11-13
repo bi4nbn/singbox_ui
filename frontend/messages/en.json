@@ -93,10 +93,12 @@
       "inbound": "Inbound",
       "outbound": "Outbound",
       "routing": "Routing",
-      "dns": "DNS"
+      "dns": "DNS",
+      "gateway": "Gateway"
     },
     "subscriptionTitle": "Subscriptions",
     "subscriptionDesc": "Manage subscription URLs and nodes",
+    "gatewayDesc": "Take over LAN traffic with tproxy: dedicated nft table, ip rule, self-heal and status API",
     "inboundTitle": "Inbound Config",
     "inboundDesc": "Configure incoming connection protocols",
     "outboundTitle": "Outbound Config",

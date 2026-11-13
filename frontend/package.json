@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && npm run copy-dist",
-    "copy-dist": "if exist ..\\server\\dist rd /s /q ..\\server\\dist && xcopy /E /I /Y out ..\\server\\dist",
+    "copy-dist": "node -e \"const fs=require('fs');fs.rmSync('../server/dist',{recursive:true,force:true});fs.cpSync('out','../server/dist',{recursive:true})\"",
     "start": "next start",
     "lint": "next lint"
   },

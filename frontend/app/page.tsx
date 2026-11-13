@@ -11,6 +11,7 @@ import { InboundConfig } from "@/components/inbound"
 import { OutboundConfig } from "@/components/outbound"
 import { RoutingConfig } from "@/components/route"
 import { DnsConfigComponent } from "@/components/dns-config"
+import { GatewayMode } from "@/components/gateway-mode"
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ import {
   Rss,
   Check,
   Globe,
+  Network,
   Copy,
   Plus,
   Square,
@@ -86,7 +88,7 @@ export default function Home() {
   } = useSingboxConfigStore()
 
   const [singboxVersion, setSingboxVersion] = useState<string>("")
-  const [activeTab, setActiveTab] = useState<"subscription" | "inbound" | "outbound" | "routing" | "dns">("inbound")
+  const [activeTab, setActiveTab] = useState<"subscription" | "inbound" | "outbound" | "routing" | "dns" | "gateway">("inbound")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [newInstanceName, setNewInstanceName] = useState("")
   const [creating, setCreating] = useState(false)
@@ -291,6 +293,7 @@ export default function Home() {
     { id: "outbound" as const, label: t("tabs.outbound"), icon: ArrowRightLeft },
     { id: "routing" as const, label: t("tabs.routing"), icon: Route },
     { id: "dns" as const, label: t("tabs.dns"), icon: Globe },
+    { id: "gateway" as const, label: t("tabs.gateway"), icon: Network },
   ]
 
   const formatLastSaved = () => {
@@ -499,6 +502,7 @@ export default function Home() {
                   {activeTab === "outbound" && <OutboundConfig showCard={false} />}
                   {activeTab === "routing" && <RoutingConfig showCard={false} availableOutbounds={availableOutbounds} />}
                   {activeTab === "dns" && <DnsConfigComponent showCard={false} />}
+                  {activeTab === "gateway" && <GatewayMode />}
                 </div>
               </div>
             )}

@@ -93,10 +93,12 @@
       "inbound": "入站",
       "outbound": "出站",
       "routing": "路由",
-      "dns": "DNS"
+      "dns": "DNS",
+      "gateway": "网关模式"
     },
     "subscriptionTitle": "订阅管理",
     "subscriptionDesc": "管理订阅地址和节点",
+    "gatewayDesc": "以 tproxy 接管局域网流量：独立 nft 表、ip rule、自愈与状态接口",
     "inboundTitle": "入站配置",
     "inboundDesc": "配置接收连接的方式和协议",
     "outboundTitle": "出站配置",

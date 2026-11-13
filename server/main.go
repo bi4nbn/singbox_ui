@@ -82,6 +82,19 @@ func main() {
 			singbox.GET("/containers", handlers.ListAllContainers)
 		}
 
+		// 网关模式（tproxy）：独立 nft 表 + ip rule/route + 自愈
+		gateway := api.Group("/gateway")
+		{
+			gateway.GET("/status", handlers.GetGatewayStatus)
+			gateway.GET("/config", handlers.GetGatewayConfig)
+			gateway.POST("/config", handlers.SaveGatewayConfig)
+			gateway.GET("/interfaces", handlers.ListGatewayInterfaces)
+			gateway.GET("/rules", handlers.PreviewGatewayRules)
+			gateway.POST("/apply", handlers.ApplyGateway)
+			gateway.POST("/stop", handlers.StopGateway)
+			gateway.POST("/heal", handlers.HealGateway)
+		}
+
 		// 订阅管理
 		sub := api.Group("/subscription")
 		{

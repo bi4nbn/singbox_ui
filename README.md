@@ -88,6 +88,13 @@
 - 容器日志查看
 - 容器状态监控
 
+### 网关模式 (tproxy)
+- **一键接管**: 独立 nft 表 + ip rule + local 路由表，把局域网流量交给 sing-box tproxy
+- **三要素自愈**: nft 表 / ip rule / ip route 任一丢失自动重建（实测 10~25s 恢复）
+- **接口可选**: 默认自动探测默认路由接口，也支持手工指定
+- **不破坏环境**: 绝不 flush ruleset，只维护自有表，卸载即删自身资源
+- 详见 [docs/gateway.md](docs/gateway.md)
+
 ---
 
 ## 快速开始

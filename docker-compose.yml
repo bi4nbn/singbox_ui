@@ -3,7 +3,12 @@ services:
     image: ghcr.io/spadesa99/singbox_ui:latest
     container_name: singbox-ui
     restart: unless-stopped
+    # 网关模式需要与宿主共享 netns，才能用 nft / ip rule 直接接管宿主流量
     network_mode: host
+    # nft、ip rule、ip route 需要网络管理能力
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/home/data

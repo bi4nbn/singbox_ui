@@ -103,6 +103,9 @@ func Initialize() error {
 		}
 	}
 
+	// 启动网关自愈循环（未启用网关时空转）
+	services.GetGateway().StartSelfHeal()
+
 	// 启动订阅自动更新调度器
 	services.StartAutoUpdateScheduler()
 
