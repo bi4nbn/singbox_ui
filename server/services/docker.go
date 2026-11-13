@@ -30,7 +30,6 @@ const (
 	ContainerDataDir       = "/var/lib/sing-box"
 )
 
-
 // DockerService Docker 服务封装
 type DockerService struct {
 	cli *client.Client
@@ -208,6 +207,8 @@ func (d *DockerService) CreateAndStartContainer(hostConfigDir string) (string, e
 	config := &container.Config{
 		Image: SingBoxImageName,
 		Cmd:   []string{"-D", ContainerDataDir, "-C", ContainerConfigDir + "/", "run"},
+		// 兼容 1.12+：旧配置常缺 route.default_domain_resolver，新版默认 FATAL
+		Env: []string{"ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER=true"},
 	}
 
 	// 主机配置
@@ -627,6 +628,8 @@ func (d *DockerService) CreateAndStartNamedContainer(configName string, hostConf
 	config := &container.Config{
 		Image: SingBoxImageName,
 		Cmd:   []string{"-D", ContainerDataDir, "-C", ContainerConfigDir + "/", "run"},
+		// 兼容 1.12+：旧配置常缺 route.default_domain_resolver，新版默认 FATAL
+		Env: []string{"ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER=true"},
 	}
 
 	// 主机配置

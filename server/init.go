@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	baseDir          string
-	singboxDir       string
+	baseDir           string
+	singboxDir        string
 	singboxConfigFile string
 )
 
@@ -53,27 +53,27 @@ func init() {
 	log.Printf("sing-box directory: %s", singboxDir)
 }
 
-// Initialize 初始化 sing-box Docker 环境
+// Initialize 初始化 sing-box 运行时（容器或本地进程）
 func Initialize() error {
-	log.Println("Initializing sing-box Docker environment...")
+	log.Println("Initializing sing-box runtime...")
 
 	// 创建 singbox 目录
 	if err := os.MkdirAll(singboxDir, 0755); err != nil {
 		return fmt.Errorf("failed to create singbox directory: %v", err)
 	}
 
-	// 初始化 Docker 服务
+	// 初始化运行时
 	if err := services.InitDockerService(); err != nil {
-		return fmt.Errorf("failed to initialize docker service: %v", err)
+		return fmt.Errorf("failed to initialize runtime: %v", err)
 	}
 
-	// 后台拉取 sing-box 镜像
+	// 后台准备运行时资源（docker 镜像 / 本地二进制）
 	go func() {
-		log.Println("Pulling sing-box image in background...")
+		log.Println("Preparing sing-box runtime in background...")
 		if err := services.EnsureSingboxImage(); err != nil {
-			log.Printf("Warning: Failed to pull sing-box image: %v", err)
+			log.Printf("Warning: Failed to prepare sing-box runtime: %v", err)
 		} else {
-			log.Println("sing-box image is ready")
+			log.Println("sing-box runtime is ready")
 		}
 	}()
 
@@ -136,7 +136,7 @@ func createDefaultConfig() error {
 			"final":             "remote_dns",
 			"independent_cache": true,
 		},
-		"inbounds":  []interface{}{},
+		"inbounds": []interface{}{},
 		"outbounds": []interface{}{
 			map[string]interface{}{
 				"type": "direct",
@@ -148,8 +148,10 @@ func createDefaultConfig() error {
 			},
 		},
 		"route": map[string]interface{}{
-			"rules": []interface{}{},
-			"final": "direct",
+			// sing-box 1.12+ 要求显式域名解析器，缺失会直接 FATAL
+			"default_domain_resolver": "local_dns",
+			"rules":                   []interface{}{},
+			"final":                   "direct",
 		},
 	}
 

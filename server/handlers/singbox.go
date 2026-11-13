@@ -10,9 +10,9 @@ import (
 )
 
 // validNamePattern 合法的实例名称：字母、数字、下划线、连字符
-var validNamePattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z_-]{1,9}$`)
+var validNamePattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]{1,9}$`)
 
-// validateName 校验实例名称：2-10位英文字母
+// validateName 校验实例名称：2-10 位，字母开头，允许字母、数字、下划线、连字符
 func validateName(c *gin.Context) (string, bool) {
 	name := c.Param("name")
 	if name == "" || !validNamePattern.MatchString(name) {
@@ -147,8 +147,12 @@ func EnsureImage(c *gin.Context) {
 		return
 	}
 
+	msg := "sing-box image is ready"
+	if services.RuntimeMode() == "local" {
+		msg = "sing-box binary is ready (local runtime)"
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"message": "sing-box image is ready",
+		"message": msg,
 	})
 }
 

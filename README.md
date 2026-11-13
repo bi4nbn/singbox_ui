@@ -88,6 +88,12 @@
 - 容器日志查看
 - 容器状态监控
 
+### 运行模式
+- **裸机优先**: 无 Docker 环境下以宿主机进程管理 sing-box 实例，PID / 日志 / 起停全托管
+- **Docker 兼容**: 同一套接口，`SANDBOX_RUNTIME=docker` 即可回到容器方式
+- 面板重启不中断实例（`setsid` 脱离 + PID 文件接管），停止时 `SIGTERM` 优雅退出
+- 详见 [docs/runtime.md](docs/runtime.md)
+
 ### 网关模式 (tproxy)
 - **一键接管**: 独立 nft 表 + ip rule + local 路由表，把局域网流量交给 sing-box tproxy
 - **三要素自愈**: nft 表 / ip rule / ip route 任一丢失自动重建（实测 10~25s 恢复）
@@ -99,7 +105,27 @@
 
 ## 快速开始
 
-### Docker Compose (推荐)
+### 裸机安装（首选）
+
+不需要 Docker，sing-box 直接以宿主机进程运行，面板用 systemd 托管。
+
+```bash
+# 构建面板（需要 Go 1.24+）
+cd server && go build -o ../singbox-ui .
+cd .. && sudo ./deploy/install.sh
+```
+
+脚本依次完成：安装 `nftables`/`iproute` → 下载 sing-box 到 `/usr/local/bin` →
+安装面板到 `/opt/singbox-ui/bin` → 写 `/etc/singbox-ui/env` →
+注册并启动 `singbox-ui.service` → 健康检查并打印访问地址。
+
+自定义监听地址：`sudo LISTEN_ADDR=0.0.0.0:7000 ./deploy/install.sh`
+
+运行模式由 `SANDBOX_RUNTIME` 决定：`local` 走宿主机进程，`docker` 走容器；
+不设置时自动探测（有 `docker.sock` 用 docker，否则用 local）。
+目录布局、实例生命周期与限制见 [docs/runtime.md](docs/runtime.md)。
+
+### Docker Compose（兼容路径）
 
 创建 `docker-compose.yml`:
 
@@ -117,6 +143,7 @@ services:
       - DATA_DIR=/home/data
       - HOST_DATA_DIR=${PWD}/data
       - LISTEN_ADDR=127.0.0.1:7000
+      - SANDBOX_RUNTIME=docker
       - TZ=Asia/Shanghai
 ```
 
@@ -154,6 +181,8 @@ ssh -L 7000:127.0.0.1:7000 user@your-server
 | `DATA_DIR` | 容器内数据目录 | `/home/data` |
 | `HOST_DATA_DIR` | 宿主机数据目录（用于 sing-box 容器挂载） | `${PWD}/data` |
 | `LISTEN_ADDR` | 服务监听地址 | `127.0.0.1:7000` |
+| `SANDBOX_RUNTIME` | 运行模式：`local` 宿主进程 / `docker` 容器 / 留空自动探测 | 自动 |
+| `SINGBOX_BIN` | local 模式下的 sing-box 二进制路径 | 自动探测 |
 | `TZ` | 时区 | `Asia/Shanghai` |
 
 ---

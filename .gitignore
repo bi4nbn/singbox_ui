@@ -58,3 +58,6 @@ temp/
 .omc/
 dist/certs/
 frontend/next-env.d.ts
+
+# 构建产物
+/singbox-ui

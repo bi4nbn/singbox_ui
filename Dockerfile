@@ -47,5 +47,9 @@ EXPOSE 8080
 # 设置时区
 ENV TZ=Asia/Shanghai
 
+# 显式锁定容器模式：面板自身跑在容器里，sing-box 实例由每个实例容器承载
+# （auto 模式依赖 docker.sock 探测，这里不依赖，避免误判为本地进程模式）
+ENV SANDBOX_RUNTIME=docker
+
 # 运行应用
 CMD ["./sing-box-ui"]

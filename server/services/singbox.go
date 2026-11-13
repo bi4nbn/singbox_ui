@@ -59,6 +59,14 @@ func GetSingboxDir() string {
 
 // InitDockerService 初始化 Docker 服务
 func InitDockerService() error {
+	if RuntimeMode() == "local" {
+		if _, err := GetLocalRuntime(); err != nil {
+			return err
+		}
+		log.Println("local runtime initialized (sing-box runs directly on host)")
+		return nil
+	}
+
 	dockerMutex.Lock()
 	defer dockerMutex.Unlock()
 
@@ -85,6 +93,13 @@ func GetDockerService() *DockerService {
 
 // EnsureSingboxImage 确保 sing-box 镜像存在
 func EnsureSingboxImage() error {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return err
+		}
+		return rt.EnsureBinary()
+	}
 	ds := GetDockerService()
 	if ds == nil {
 		return fmt.Errorf("docker service not initialized")
@@ -94,18 +109,24 @@ func EnsureSingboxImage() error {
 
 // RunSingboxContainer 启动 sing-box 容器
 func RunSingboxContainer() (string, error) {
-	ds := GetDockerService()
-	if ds == nil {
-		return "", fmt.Errorf("docker service not initialized")
-	}
-
-	// 确保配置文件存在
 	configPath := filepath.Join(singboxDir, "config.json")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return "", fmt.Errorf("config file not found: %s", configPath)
 	}
 
-	// 创建并启动容器
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return "", err
+		}
+		return rt.Run(singboxDir, localDefaultName)
+	}
+
+	ds := GetDockerService()
+	if ds == nil {
+		return "", fmt.Errorf("docker service not initialized")
+	}
+
 	containerID, err := ds.CreateAndStartContainer(singboxDir)
 	if err != nil {
 		return "", err
@@ -117,6 +138,14 @@ func RunSingboxContainer() (string, error) {
 
 // StopSingboxContainer 停止 sing-box 容器
 func StopSingboxContainer() error {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return err
+		}
+		return rt.Stop(localDefaultName)
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return fmt.Errorf("docker service not initialized")
@@ -136,6 +165,14 @@ func StopSingboxContainer() error {
 
 // CheckContainerRunning 检查容器是否在运行
 func CheckContainerRunning() (bool, string) {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return false, ""
+		}
+		return rt.Status(localDefaultName)
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return false, ""
@@ -152,6 +189,18 @@ func CheckContainerRunning() (bool, string) {
 
 // GetContainerLogs 获取容器日志
 func GetContainerLogs() string {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return err.Error()
+		}
+		logs, err := rt.Logs(localDefaultName, 200)
+		if err != nil {
+			return fmt.Sprintf("Failed to get logs: %v", err)
+		}
+		return logs
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return "Docker service not initialized"
@@ -168,6 +217,14 @@ func GetContainerLogs() string {
 
 // GetSingBoxVersion 获取 sing-box 版本（从容器）
 func GetSingBoxVersion() (string, error) {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return "", err
+		}
+		return rt.Version()
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return "", fmt.Errorf("docker service not initialized")
@@ -209,7 +266,11 @@ func rebuildNodeMapping(configData []byte) {
 	if err != nil {
 		return
 	}
-	type key struct{ server string; port int; proto string }
+	type key struct {
+		server string
+		port   int
+		proto  string
+	}
 	nodeNameByKey := make(map[key]string)
 	for _, sub := range subData.Subscriptions {
 		for _, n := range sub.Nodes {
@@ -277,19 +338,25 @@ func getNamedConfigDir(name string) string {
 
 // RunNamedContainer 启动命名配置的容器
 func RunNamedContainer(name string) (string, error) {
-	ds := GetDockerService()
-	if ds == nil {
-		return "", fmt.Errorf("docker service not initialized")
-	}
-
-	// 确保配置目录存在
 	configDir := getNamedConfigDir(name)
 	configPath := filepath.Join(configDir, "config.json")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return "", fmt.Errorf("config file not found: %s", configPath)
 	}
 
-	// 创建并启动容器
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return "", err
+		}
+		return rt.Run(configDir, name)
+	}
+
+	ds := GetDockerService()
+	if ds == nil {
+		return "", fmt.Errorf("docker service not initialized")
+	}
+
 	containerID, err := ds.CreateAndStartNamedContainer(name, configDir)
 	if err != nil {
 		return "", err
@@ -301,6 +368,14 @@ func RunNamedContainer(name string) (string, error) {
 
 // StopNamedContainer 停止命名配置的容器
 func StopNamedContainer(name string) error {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return err
+		}
+		return rt.Stop(name)
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return fmt.Errorf("docker service not initialized")
@@ -320,6 +395,14 @@ func StopNamedContainer(name string) error {
 
 // GetNamedContainerStatus 获取命名容器状态
 func GetNamedContainerStatus(name string) (bool, string) {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return false, ""
+		}
+		return rt.Status(name)
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return false, ""
@@ -336,6 +419,18 @@ func GetNamedContainerStatus(name string) (bool, string) {
 
 // GetNamedContainerLogs 获取命名容器日志
 func GetNamedContainerLogs(name string) string {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return err.Error()
+		}
+		logs, err := rt.Logs(name, 200)
+		if err != nil {
+			return fmt.Sprintf("Failed to get logs: %v", err)
+		}
+		return logs
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return "Docker service not initialized"
@@ -352,6 +447,30 @@ func GetNamedContainerLogs(name string) string {
 
 // ListAllContainers 列出所有 sing-box 容器
 func ListAllContainers() ([]ContainerInfo, error) {
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return nil, err
+		}
+		var out []ContainerInfo
+		for _, n := range rt.Names() {
+			running, id := rt.Status(n)
+			state := "exited"
+			status := "stopped (local)"
+			if running {
+				state = "running"
+				status = "running (local)"
+			}
+			out = append(out, ContainerInfo{
+				Name:        n,
+				ContainerID: id,
+				State:       state,
+				Status:      status,
+			})
+		}
+		return out, nil
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return nil, fmt.Errorf("docker service not initialized")
@@ -362,17 +481,23 @@ func ListAllContainers() ([]ContainerInfo, error) {
 
 // CheckNamedConfig 验证命名配置是否正确
 func CheckNamedConfig(name string) (bool, string, error) {
+	configDir := getNamedConfigDir(name)
+	configPath := filepath.Join(configDir, "config.json")
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return false, "", fmt.Errorf("config file not found for instance: %s", name)
+	}
+
+	if RuntimeMode() == "local" {
+		rt, err := GetLocalRuntime()
+		if err != nil {
+			return false, "", err
+		}
+		return rt.Check(configDir)
+	}
+
 	ds := GetDockerService()
 	if ds == nil {
 		return false, "", fmt.Errorf("docker service not initialized")
-	}
-
-	configDir := getNamedConfigDir(name)
-	configPath := filepath.Join(configDir, "config.json")
-
-	// 检查配置文件是否存在
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return false, "", fmt.Errorf("config file not found for instance: %s", name)
 	}
 
 	return ds.CheckNamedConfig(name, configDir)

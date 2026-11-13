@@ -16,4 +16,6 @@ services:
       - DATA_DIR=/home/data
       - HOST_DATA_DIR=${PWD}/data
       - LISTEN_ADDR=127.0.0.1:7000
+      # docker：sing-box 实例以容器方式运行；local：以宿主机进程方式运行
+      - SANDBOX_RUNTIME=docker
       - TZ=Asia/Shanghai
