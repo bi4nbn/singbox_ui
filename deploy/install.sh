@@ -108,7 +108,22 @@ systemctl daemon-reload
 systemctl enable singbox-ui >/dev/null 2>&1
 systemctl restart singbox-ui
 
-# ---------- 6. 健康检查 ----------
+# ---------- 6. 防火墙放行（仅当监听 0.0.0.0） ----------
+if [[ $LISTEN == 0.0.0.0* ]]; then
+  p=${LISTEN##*:}
+  if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
+    firewall-cmd --permanent --add-port="$p/tcp" >/dev/null 2>&1 || true
+    firewall-cmd --reload >/dev/null 2>&1 || true
+    c "firewalld 已放行 $p/tcp"
+  elif command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -qi "Status: active"; then
+    ufw allow "$p/tcp" >/dev/null 2>&1 || true
+    c "ufw 已放行 $p/tcp"
+  else
+    c "未检测到启用的防火墙，跳过放行"
+  fi
+fi
+
+# ---------- 7. 健康检查 ----------
 sleep 3
 ip=$(hostname -I 2>/dev/null | awk '{print $1}')
 port=${LISTEN##*:}
